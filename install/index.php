@@ -1,8 +1,11 @@
 <?php
 
-\IncludeModuleLangFile(__FILE__);
+use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Application;
+use \Maximaster\Coupanda\DatabaseInstaller;
+use \Maximaster\Coupanda\FileInstaller;
 
-if (\class_exists('maximaster.coupanda')) {
+if (\class_exists('maximaster_coupanda')) {
     return;
 }
 
@@ -18,15 +21,19 @@ class maximaster_coupanda extends \CModule
     public $MODULE_GROUP_RIGHTS;
     public $PARTNER_NAME;
     public $PARTNER_URI;
+    protected $moduleDir;
 
     public function __construct()
     {
+        Loc::loadMessages(__FILE__);
         $this->initModuleId();
         $this->initModuleVersionDefinition();
         $this->initModuleName();
         $this->initModuleDescription();
         $this->initModulePartnerInfo();
         $this->initModuleGroupRights();
+        require_once __DIR__ . '/DatabaseInstaller.php';
+        require_once __DIR__ . '/FileInstaller.php';
     }
 
     protected function initModuleId()
@@ -36,12 +43,12 @@ class maximaster_coupanda extends \CModule
 
     protected function initModuleName()
     {
-        $this->MODULE_NAME = \Bitrix\Main\Localization\Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_NAME');
+        $this->MODULE_NAME = Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_NAME');
     }
 
     protected function initModuleDescription()
     {
-        $this->MODULE_DESCRIPTION = \Bitrix\Main\Localization\Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_DESCRIPTION');
+        $this->MODULE_DESCRIPTION = Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_DESCRIPTION');
     }
 
     protected function initModuleVersionDefinition()
@@ -82,7 +89,7 @@ class maximaster_coupanda extends \CModule
 
     protected function initModulePartnerInfo()
     {
-        $this->PARTNER_NAME = \GetMessage('MAXIMASTER.COUPANDA:MODULE_PARTNER_NAME');
+        $this->PARTNER_NAME = Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_PARTNER_NAME');
         $this->PARTNER_URI = 'http://www.maximaster.ru';
     }
 
@@ -93,10 +100,12 @@ class maximaster_coupanda extends \CModule
 
     public function DoUninstall()
     {
+        // Сначала удаляем БД
         if (!$this->UnInstallDB()) {
             return false;
         }
 
+        // Если БД удалилась, то молча сносим все остальное
         $this->UnInstallEvents();
         $this->UnInstallFiles();
 
@@ -109,7 +118,7 @@ class maximaster_coupanda extends \CModule
         $references = [];
 
         foreach ($rightsReferenceIds as $referenceId) {
-            $references[] = "[{$referenceId}] " . \GetMessage('MAXIMASTER.COUPANDA:MODULE_RIGHTS_REFERENCE_' . $referenceId);
+            $references[] = "[{$referenceId}] " . Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_RIGHTS_REFERENCE_' . $referenceId);
         }
 
         return [
@@ -133,62 +142,50 @@ class maximaster_coupanda extends \CModule
             return false;
         }
 
-        $this->InstallEvents();
-        $this->InstallFiles();
+        if (!$this->InstallFiles()) {
+            $this->UninstallDB();
+            return false;
+        }
 
-        return true;
-    }
-
-    public function InstallDB()
-    {
-        $connection = \Bitrix\Main\Application::getConnection();
-        try {
-            $connection->startTransaction();
-            \Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
-            \Bitrix\Main\Loader::includeModule($this->MODULE_ID);
-            $this->createProcessTable($connection);
-            $this->addPIDColumn($connection);
-            $connection->commitTransaction();
-        } catch (\Exception $e) {
-            $connection->rollbackTransaction();
-            global $APPLICATION;
-            $APPLICATION->ResetException();
-            $APPLICATION->ThrowException($e->getMessage());
+        if (!$this->InstallEvents()) {
+            $this->UninstallDB();
+            $this->UninstallFiles();
             return false;
         }
 
         return true;
     }
 
-    protected function createProcessTable(\Bitrix\Main\DB\Connection $connection)
+    public function InstallDB()
     {
-        $tableName = \Maximaster\Coupanda\Orm\ProcessTable::getTableName();
-        if (!$connection->isTableExists($tableName)) {
-            $connection->createTable(\Maximaster\Coupanda\Orm\ProcessTable::getTableName(),
-                \Maximaster\Coupanda\Orm\ProcessTable::getMap(), ['ID'], ['ID']);
+        $connection = Application::getConnection();
+        $installer = new DatabaseInstaller($this->MODULE_ID, $connection);
+        try {
+            return $installer->install();
+        } catch (\Exception $e) {
+            global $APPLICATION;
+            $APPLICATION->ResetException();
+            $APPLICATION->ThrowException(Loc::getMessage('MAXIMASTER.COUPANDA:DB_INSTALLATION_ERROR', [
+                'ERROR' => $e->getMessage()
+            ]));
+            return false;
         }
-    }
-
-    protected function dropProcessTable(\Bitrix\Main\DB\Connection $connection)
-    {
-        $tableName = \Maximaster\Coupanda\Orm\ProcessTable::getTableName();
-        if ($connection->isTableExists($tableName)) {
-            $connection->dropTable($tableName);
-        }
-    }
-
-    protected function addPIDColumn(\Bitrix\Main\DB\Connection $connection)
-    {
-        $connection->queryExecute('ALTER TABLE `b_sale_discount_coupon` ADD `MAXIMASTER_COUPANDA_PID` INT NULL DEFAULT NULL');
-    }
-
-    protected function dropPIDColumn(\Bitrix\Main\DB\Connection $connection)
-    {
-        $connection->queryExecute('ALTER TABLE `b_sale_discount_coupon` DROP `MAXIMASTER_COUPANDA_PID`');
     }
 
     public function InstallFiles()
     {
+        global $APPLICATION;
+        try {
+            $installer = new FileInstaller(__DIR__ . '/../', Application::getDocumentRoot());
+            $installer->install();
+        } catch (\Bitrix\Main\SystemException $e) {
+            $APPLICATION->ResetException();
+            $APPLICATION->ThrowException(Loc::getMessage('MAXIMASTER.COUPANDA:FILES_INSTALLATION_ERROR', [
+                'ERROR' => $e->getMessage()
+            ]));
+            return false;
+        }
+
         return true;
     }
 
@@ -199,28 +196,35 @@ class maximaster_coupanda extends \CModule
 
     public function UninstallDB()
     {
-        $connection = \Bitrix\Main\Application::getConnection();
+        $connection = Application::getConnection();
+        $installer = new DatabaseInstaller($this->MODULE_ID, $connection);
 
         try {
-            \Bitrix\Main\Loader::includeModule($this->MODULE_ID);
-            $connection->startTransaction();
-            $this->dropProcessTable($connection);
-            $this->dropPIDColumn($connection);
-            \Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
-            $connection->commitTransaction();
+            return $installer->uninstall();
         } catch (\Exception $e) {
-            $connection->rollbackTransaction();
             global $APPLICATION;
             $APPLICATION->ResetException();
-            $APPLICATION->ThrowException($e->getMessage());
+            $APPLICATION->ThrowException(Loc::getMessage('MAXIMASTER.COUPANDA:DB_UNINSTALLATION_ERROR', [
+                'ERROR' => $e->getMessage()
+            ]));
             return false;
         }
-
-        return true;
     }
 
     public function UninstallFiles()
     {
+        global $APPLICATION;
+        try {
+            $installer = new FileInstaller(__DIR__ . '/../', Application::getDocumentRoot());
+            $installer->uninstall();
+        } catch (\Bitrix\Main\SystemException $e) {
+            $APPLICATION->ResetException();
+            $APPLICATION->ThrowException(Loc::getMessage('MAXIMASTER.COUPANDA:FILES_UNINSTALLATION_ERROR', [
+                'ERROR' => $e->getMessage()
+            ]));
+            return false;
+        }
+
         return true;
     }
 
