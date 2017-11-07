@@ -142,12 +142,12 @@ class maximaster_coupanda extends \CModule
             return false;
         }
 
-        if (!$this->InstallFiles()) {
+        if (!$this->InstallEvents()) {
             $this->UninstallDB();
             return false;
         }
 
-        if (!$this->InstallEvents()) {
+        if (!$this->InstallFiles()) {
             $this->UninstallDB();
             $this->UninstallFiles();
             return false;
