@@ -5,5 +5,5 @@ $MESS['PROCESS_ENTITY_STARTED_AT_FIELD'] = 'Дата начала';
 $MESS['PROCESS_ENTITY_FINISHED_AT_FIELD'] = 'Дата окончания';
 $MESS['PROCESS_ENTITY_SETTINGS_FIELD'] = 'Настройки';
 $MESS['PROCESS_ENTITY_REPORT_FIELD'] = 'Отчет';
-$MESS['PROCESS_ENTITY_SETTINGS_FIELD_NOT_VALID'] = 'Поле "Настройки" должно содержать экземпляр класса ' . \Maximaster\Coupanda\ProcessSettings::class;
-$MESS['PROCESS_ENTITY_REPORT_FIELD_NOT_VALID'] = 'Поле "Отчет" должно содержать экземпляр класса ' . \Maximaster\Coupanda\ProcessReport::class;
+$MESS['PROCESS_ENTITY_SETTINGS_FIELD_NOT_VALID'] = 'Поле "Настройки" должно содержать экземпляр класса ' . \Maximaster\Coupanda\Process\ProcessSettings::class;
+$MESS['PROCESS_ENTITY_REPORT_FIELD_NOT_VALID'] = 'Поле "Отчет" должно содержать экземпляр класса ' . \Maximaster\Coupanda\Process\ProcessReport::class;

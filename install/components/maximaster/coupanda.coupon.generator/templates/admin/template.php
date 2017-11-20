@@ -3,7 +3,7 @@
 namespace Maximaster\Coupanda;
 
 use \Bitrix\Main\Localization\Loc;
-
+\CJSCore::Init('window');
 function getHint($id, $hint)
 {
     $id = 'hint_' . $id;
@@ -48,4 +48,8 @@ $tabControl = new \CAdminTabControl('coupanda_generator', $tabs, false, true);
 $tabControl->Begin();
 $tabControl->BeginNextTab();
 include __DIR__ . '/configuration.php';
+$tabControl->BeginNextTab();
+echo '<div id="js-progress-block"></div>';
+$tabControl->BeginNextTab();
+echo '<div id="js-report-block"></div>';
 $tabControl->End();

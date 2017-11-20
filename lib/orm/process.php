@@ -9,8 +9,8 @@ use Bitrix\Main\Entity\FieldError;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\TextField;
 use Bitrix\Main\Localization\Loc;
-use Maximaster\Coupanda\ProcessReport;
-use Maximaster\Coupanda\ProcessSettings;
+use Maximaster\Coupanda\Process\ProcessReport;
+use Maximaster\Coupanda\Process\ProcessSettings;
 
 Loc::loadMessages(__FILE__);
 

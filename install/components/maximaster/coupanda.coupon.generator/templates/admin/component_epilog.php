@@ -1,0 +1,3 @@
+<?php
+
+CJSCore::Init(['jquery']);

@@ -1,10 +1,9 @@
 <?php
 
-namespace Maximaster\Coupanda;
+namespace Maximaster\Coupanda\EventHandlers;
 
 use Bitrix\Main\Context;
 use Bitrix\Main\EventManager;
-use Maximaster\Coupanda\EventHandlers\OnBuildGlobalMenu;
 
 class EventHandlersRegistry
 {

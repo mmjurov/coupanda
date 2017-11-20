@@ -7,7 +7,7 @@ namespace Maximaster\Coupanda;
  */
 ?>
 
-<form name="coupon_generator_form">
+<form name="coupon_generator_form" id="js-generator-settings">
     <input type="hidden" name="ajax_action" value="generation_start">
     <input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
     <?=bitrix_sessid_post();?>
@@ -38,6 +38,7 @@ namespace Maximaster\Coupanda;
             <label for="template">Шаблон купона:</label></td>
         <td>
             <input type="text" id="template" name="TEMPLATE">
+            <input type="button" id="js-coupon-generation-preview" value="Превью">
         </td>
     </tr>
     <tr>
@@ -102,14 +103,13 @@ namespace Maximaster\Coupanda;
             <?=getHint('user', 'Все купоны из пула будут принадлежать одному человеку и только он сможет ими воспользоваться');?>
             <label for="user">Владелец:</label></td>
         <td>
-            <?=\FindUserID('USER', null, '', 'coupon_generator_form');?>
+            <?=\FindUserID('USER_ID', null, '', 'coupon_generator_form');?>
         </td>
     </tr>
     <tr>
         <td></td>
         <td>
-            <input type="button" id="js-coupon-generation-preview" value="Превью">
-            <input type="button" class="adm-btn-save" id="js-start-coupon-generation" value="Начать генерацию">
+            <input type="submit" class="adm-btn-save" id="js-start-coupon-generation" value="Начать генерацию">
         </td>
     </tr>
 

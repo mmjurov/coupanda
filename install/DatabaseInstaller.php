@@ -6,6 +6,7 @@ use Bitrix\Main\DB\Connection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Maximaster\Coupanda\EventHandlers\EventHandlersRegistry;
 use Maximaster\Coupanda\Orm\ProcessTable;
 
 class DatabaseInstaller
@@ -112,7 +113,7 @@ class DatabaseInstaller
             EventHandlersRegistry::class,
             'register',
             100,
-            __DIR__ . '/../lib/eventhandlersregistry.php'
+            __DIR__ . '/../lib/eventhandlers/eventhandlersregistry.php'
         );
     }
 
@@ -124,7 +125,7 @@ class DatabaseInstaller
             $this->moduleId,
             EventHandlersRegistry::class,
             'register',
-            __DIR__ . '/../lib/eventhandlersregistry.php'
+            __DIR__ . '/../lib/eventhandlers/eventhandlersregistry.php'
         );
     }
 }
