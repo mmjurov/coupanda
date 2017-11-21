@@ -7,6 +7,19 @@ jQuery(function () {
     var Generator = function() {
         "use strict";
 
+        var popup = new BX.PopupWindow('generator_popup', window.body, {
+            autoHide: true,
+            offsetTop: 1,
+            offsetLeft: 0,
+            lightShadow: true,
+            closeIcon: true,
+            closeByEsc: true,
+            overlay: {
+                backgroundColor: '#000', opacity: 40
+            },
+            className: 'popup-window--coupanda-padded'
+        });
+
         /**
          * Запущен ли процесс
          * @type {boolean}
@@ -39,13 +52,13 @@ jQuery(function () {
          * @param {function} error
          */
         var makeActionRequest = function (action, data, success, error) {
-
             data += (data.length > 0 ? '&' : '') + 'ajax_action=' + action;
             $.ajax({
                 url: window.location.href,
                 type: 'POST',
                 data: data,
                 dataType: 'json',
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
                 success: function (response, status, xhr) {
 
                     if (response.status < 200 || response.status >= 300) {
@@ -53,11 +66,20 @@ jQuery(function () {
                         return false;
                     }
 
-                    success(response, status, xhr);
+                    // Вызываем с таймаутом, чтобы порядок работы с тробблером не нарушался
+                    setTimeout(function(){
+                        success(response, status, xhr);
+                    }, 1)
 
                 },
                 error: function() {
                     error('Произошла ошибка. Обновите страницу');
+                },
+                beforeSend: function() {
+                    ShowWaitWindow();
+                },
+                complete: function () {
+                    CloseWaitWindow();
                 }
             });
         };
@@ -66,22 +88,10 @@ jQuery(function () {
          * Метод для показа всплывающего окна с информацией
          *
          * @param {string} content
-         * @param {string} title
          */
-        var showPopup = function(content, title) {
-            alert(content);
-            return;
-            var options = {
-                title: title || 'Внимание!',
-                content: content,
-                draggable: false,
-                resizable: false,
-                min_width: 100,
-                min_height: 100
-            };
-            var dialog = new BX.CDialog(options);
-            dialog.SetContent(content);
-            dialog.Show();
+        var showPopup = function(content) {
+            popup.setContent(content);
+            popup.show();
         };
 
         /**
@@ -101,9 +111,7 @@ jQuery(function () {
 
                 isRunning = true;
 
-                ShowWaitWindow();
                 sessionId = this.elements.sessid.value;
-                console.log(sessionId);
                 var formData = $(this).serialize();
                 makeActionRequest('generation_start', formData, generationSuccess, generationError);
                 return false;
@@ -116,16 +124,16 @@ jQuery(function () {
                     return false;
                 }
 
-                ShowWaitWindow();
                 var template = $('#template').val();
-                makeActionRequest('generation_preview', 'template=' + template, previewSuccess, previewError);
+                makeActionRequest('generation_preview',
+                    'template=' + template + '&sessid=' + sessionId,
+                    previewSuccess, previewError
+                );
                 return false;
             });
         };
 
         var generationSuccess = function (response, status, xhr) {
-
-            ShowWaitWindow();
 
             if (response.payload.progress_html) {
                 $progressBlock.html(response.payload.progress_html);
@@ -143,21 +151,18 @@ jQuery(function () {
                 makeActionRequest(response.payload.next_action, 'sessid=' + sessionId, generationSuccess, generationError);
             } else {
                 switchTab('report');
-                CloseWaitWindow();
                 isRunning = false;
                 showPopup(response.message);
             }
         };
 
         var generationError = function (errorMessage) {
-            CloseWaitWindow();
             isRunning = false;
             showPopup(errorMessage);
         };
 
         var previewSuccess = function (response) {
-            CloseWaitWindow();
-            if (response.payload.preview) {
+            if (response.payload.preview != undefined) {
                 showPopup(response.payload.preview);
             } else {
                 previewError('Произошла ошибка, попробуйте снова');
@@ -165,7 +170,6 @@ jQuery(function () {
         };
 
         var previewError = function (errorMessage) {
-            CloseWaitWindow();
             showPopup(errorMessage);
         };
 

@@ -1,3 +1,3 @@
 <?php
 
-CJSCore::Init(['jquery']);
+\CJSCore::Init(['jquery', 'popup']);

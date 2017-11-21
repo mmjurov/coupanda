@@ -32,25 +32,20 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     public function executeComponent()
     {
         $this->setFrameMode(false);
+        $isAjax = $this->isAjaxRequest() && $this->request->isPost();
 
         try {
             $this->checkPermissions();
             $this->loadModules();
-            if ($this->isAjaxRequest() && $this->request->isPost()) {
-                if (!check_bitrix_sessid()) {
-                    throw new SystemException('Ваша сессия истекла');
-                }
+            if ($isAjax) {
                 $this->handleAjax();
                 return null;
             } else {
                 return $this->handle();
             }
         } catch (\Exception $e) {
-            if ($this->isAjaxRequest()) {
-
-            } else {
-                \ShowError($e->getMessage());
-            }
+            \ShowError($e->getMessage());
+            return null;
         }
     }
 
@@ -156,11 +151,20 @@ class CoupandaCouponGenerator extends \CBitrixComponent
         $response->clear();
         $response->addHeader('Content-Type', 'application/json');
 
-        $ajaxResponse = $this->handleAjaxAction($request);
-        if (!($ajaxResponse instanceof JsonResponse)) {
+        try {
+            if (!check_bitrix_sessid()) {
+                throw new SystemException('Ваша сессия истекла');
+            }
+
+            $ajaxResponse = $this->handleAjaxAction($request);
+            if (!($ajaxResponse instanceof JsonResponse)) {
+                throw new \LogicException('Произошла неизвестная ошибка работы с модулем. Обратитесь в техническую поддержку');
+            }
+
+        } catch (\Exception $e) {
             $ajaxResponse = new JsonResponse();
             $ajaxResponse->setStatus(500);
-            $ajaxResponse->setMessage('Произошла неизвестная ошибка работы с модулем. Обратитесь в техническую поддержку');
+            $ajaxResponse->setMessage($e->getMessage());
         }
 
         $response->flush($ajaxResponse->render());
@@ -171,7 +175,6 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
     protected function handleAjaxAction(HttpRequest $request)
     {
-        $response = new JsonResponse();
         $action = $request['ajax_action'];
 
         $progress = new ProcessProgress();
@@ -191,6 +194,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
                 break;
         }
 
+        $response = new JsonResponse();
         $response->setStatus(400);
         $response->setMessage('Действие ' . $action . ' недоступно');
         return $response;
@@ -302,10 +306,17 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
         $preview = $template;
         $response = new JsonResponse();
-        $response->setStatus(200);
-        $response->setPayload([
-            'preview' => $preview,
-        ]);
+
+        if (strlen($template) === 0) {
+            $response->setStatus(500);
+            $response->setMessage('Указан пустой шаблон');
+        } else {
+            $response->setStatus(200);
+            $response->setPayload([
+                'preview' => $preview,
+            ]);
+        }
+
         return $response;
     }
 
