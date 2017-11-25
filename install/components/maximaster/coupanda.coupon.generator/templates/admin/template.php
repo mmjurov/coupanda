@@ -1,6 +1,6 @@
 <?php
 
-namespace Maximaster\Coupanda;
+namespace Maximaster\Coupanda\Generator\AdminTemplate;
 
 use \Bitrix\Main\Localization\Loc;
 \CJSCore::Init('window');
@@ -18,6 +18,12 @@ HTML;
 <style>
     .popup-window--coupanda-padded {
         padding: 20px;
+        max-width: 80%;
+    }
+
+    .popup-window__preview-coupon {
+        margin: 5px 10px;
+        display: inline-block;
     }
 </style>
 <?=\BeginNote();?>

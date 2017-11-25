@@ -61,6 +61,16 @@ jQuery(function () {
                 headers: {'X-Requested-With': 'XMLHttpRequest'},
                 success: function (response, status, xhr) {
 
+                    if (
+                        typeof response !== 'object'
+                        || response.status === undefined
+                        || response.message === undefined
+                        || response.payload === undefined
+                    ) {
+                        error('Произошла ошибка на сервере. Ответ был сформирован в формате, неподдерживаемом данным клиентом');
+                        return false;
+                    }
+
                     if (response.status < 200 || response.status >= 300) {
                         error(response.message);
                         return false;
@@ -103,7 +113,20 @@ jQuery(function () {
         };
 
         this.bindEvents = function () {
-            $('#js-generator-settings').on('submit', function (event) {
+
+            var formId = 'js-generator-settings';
+            var form = document.getElementById(formId);
+
+            if (!form) {
+                error('Форма с настройками не найдена на странице. Попробуйте перезагрузить страницу');
+                return;
+            }
+
+            var $form = $(form);
+
+            checkMaxUseAvailability(form);
+
+            $form.on('submit', function (event) {
                 if (isRunning) {
                     showPopup('Процесс уже запущен. Необходимо дождаться завершения');
                     return false;
@@ -116,6 +139,11 @@ jQuery(function () {
                 makeActionRequest('generation_start', formData, generationSuccess, generationError);
                 return false;
             });
+
+            form.elements['TYPE'].addEventListener('change', function() {
+                checkMaxUseAvailability(form);
+            });
+
 
             $('#js-coupon-generation-preview').on('click', function (event) {
 
@@ -135,13 +163,7 @@ jQuery(function () {
 
         var generationSuccess = function (response, status, xhr) {
 
-            if (response.payload.progress_html) {
-                $progressBlock.html(response.payload.progress_html);
-            }
-
-            if (response.payload.report) {
-                $reportBlock.html(renderReportHtml(response.payload.report));
-            }
+            render(response);
 
             if (response.payload.init && response.payload.init == 'ok') {
                 switchTab('progress');
@@ -156,14 +178,19 @@ jQuery(function () {
             }
         };
 
-        var generationError = function (errorMessage) {
+        var generationError = function(errorMessage, response) {
             isRunning = false;
+            render(response);
             showPopup(errorMessage);
         };
 
         var previewSuccess = function (response) {
             if (response.payload.preview != undefined) {
-                showPopup(response.payload.preview);
+                var previewReport = response.payload.preview.map(function (coupon) {
+                    return '<span class="popup-window__preview-coupon">' + coupon + '</span>';
+                });
+                var header = '<p>' + response.payload.preview.length + ' примеров генерации</p>'
+                showPopup(header + previewReport.join(''));
             } else {
                 previewError('Произошла ошибка, попробуйте снова');
             }
@@ -180,7 +207,24 @@ jQuery(function () {
                     + '<td>' + (reportObject.value === null ? '' : reportObject.value) + '</td></tr>';
             });
             return '<table>' + html.join('') + '</table>';
-        }
+        };
+
+        var render = function(response) {
+            if (response.payload.progress_html) {
+                $progressBlock.html(response.payload.progress_html);
+            }
+
+            if (response.payload.report) {
+                $reportBlock.html(renderReportHtml(response.payload.report));
+            }
+        };
+
+        var checkMaxUseAvailability = function(form) {
+            var maxUseCount = form.elements.MAX_USE_COUNT;
+            var couponType = form.elements['TYPE'];
+
+            maxUseCount.disabled = couponType.value != 4;
+        };
     };
 
     var generator = new Generator();

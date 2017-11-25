@@ -6,37 +6,32 @@ class LettersCollection extends SymbolsCollection implements LettersCollectionIn
 {
     public function getLowerCaseOne($number)
     {
-        return \ToLower($this->getOne($number));
+        return \ToLower(parent::getOne($number));
     }
 
     public function getRandomLowerCaseOne()
     {
-        return \ToLower($this->getRandomOne());
+        return \ToLower(parent::getRandomOne());
     }
 
     public function getUpperCaseOne($number)
     {
-        return \ToUpper($this->getOne($number));
+        return \ToUpper(parent::getOne($number));
     }
 
     public function getRandomUpperCaseOne()
     {
-        return \ToUpper($this->getRandomOne());
+        return \ToUpper(parent::getRandomOne());
     }
 
     public function getOne($number)
     {
-        return rand(0, 1) == 1 ? $this->getLowerCaseOne($number) : $this->getUpperCaseOne($number);
+        return rand(0, 1) === 1 ? $this->getLowerCaseOne($number) : $this->getUpperCaseOne($number);
     }
 
     public function getRandomOne()
     {
-        return rand(0, 1) == 1 ? $this->getRandomLowerCaseOne() : $this->getRandomUpperCaseOne();
-    }
-
-    public function getCount()
-    {
-        return parent::getCount() * 2;
+        return rand(0, 1) === 1 ? $this->getRandomLowerCaseOne() : $this->getRandomUpperCaseOne();
     }
 
     public function getSymbols()

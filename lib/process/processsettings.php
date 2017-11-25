@@ -2,7 +2,9 @@
 
 namespace Maximaster\Coupanda\Process;
 
+use Bitrix\Main\Error;
 use Bitrix\Main\HttpRequest;
+use Bitrix\Main\Result;
 
 class ProcessSettings
 {
@@ -18,6 +20,9 @@ class ProcessSettings
     /** @var int */
     protected $type;
 
+    /** @var bool */
+    protected $active;
+
     /** @var \DateTime */
     protected $activeFrom;
 
@@ -26,9 +31,6 @@ class ProcessSettings
 
     /** @var int */
     protected $maxUseCount;
-
-    /** @var bool */
-    protected $active;
 
     /** @var int */
     protected $userId;
@@ -55,6 +57,10 @@ class ProcessSettings
 
         if (isset($request['TYPE']) && is_numeric($request['TYPE']) && $request['TYPE'] > 0) {
             $instance->type = (int)$request['TYPE'];
+        }
+
+        if (isset($request['ACTIVE']) && strlen($request['ACTIVE']) > 0) {
+            $instance->active = $request['ACTIVE'] === 'Y';
         }
 
         if (isset($request['ACTIVE_FROM']) && strlen($request['ACTIVE_FROM']) > 0) {
@@ -110,6 +116,11 @@ class ProcessSettings
         return $this->type;
     }
 
+    public function getActive()
+    {
+        return $this->active;
+    }
+
     /**
      * @return \DateTime
      */
@@ -150,5 +161,22 @@ class ProcessSettings
         return $this->userId;
     }
 
+    public function validate()
+    {
+        $result = new Result();
+        if ($this->getTemplate() === null) {
+            $result->addError(new Error('Указан пустой шаблон'));
+        }
 
+        $count = $this->getCount();
+        if (!$count || $count <= 0) {
+            $result->addError(new Error('Необходимо установить количество промокодов для генерации'));
+        }
+
+        if ($this->getDiscountId() === null) {
+            $result->addError(new Error('Не задано правило обработки корзины'));
+        }
+
+        return $result;
+    }
 }

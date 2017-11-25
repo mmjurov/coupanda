@@ -7,8 +7,17 @@ use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\DiscountCouponTable;
 use Bitrix\Sale\Internals\DiscountTable;
+use Maximaster\Coupanda\Generator\Collections\DigitsCollection;
+use Maximaster\Coupanda\Generator\Collections\EnglishLettersCollection;
+use Maximaster\Coupanda\Generator\Collections\RussianLettersCollection;
+use Maximaster\Coupanda\Generator\CouponGenerator;
+use Maximaster\Coupanda\Generator\CouponGeneratorException;
+use Maximaster\Coupanda\Generator\SequenceGenerator;
+use Maximaster\Coupanda\Generator\Template\SequenceTemplate;
+use Maximaster\Coupanda\Generator\Template\SequenceTemplateInterface;
 use Maximaster\Coupanda\Http\JsonResponse;
 use Maximaster\Coupanda\Process\ProcessProgress;
 use Maximaster\Coupanda\Process\ProcessReport;
@@ -119,11 +128,25 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     {
         $q = DiscountTable::query()
             ->addOrder('ID', 'desc')
-            ->setSelect(['ID', 'NAME', 'ACTIVE']);
+            ->setSelect(['ID', 'NAME', 'ACTIVE', 'ACTIVE_FROM', 'ACTIVE_TO']);
+
+        $defaultValue = '';
+        $requestedValue = $this->request->get('DISCOUNT_ID');
+        $selectedValue = $requestedValue ? $requestedValue : $defaultValue;
 
         $discounts = [];
         $discountList = $q->exec();
+        $now = new DateTime();
         while ($discount = $discountList->fetch()) {
+
+            $discountFormOption = [
+                'NAME' => "[{$discount['ID']}] {$discount['NAME']}",
+                'VALUE' => $discount['ID'],
+                'SELECTED' => $discount['ID'] == $selectedValue,
+            ];
+
+            $discount['FORM_OPTION'] = $discountFormOption;
+
             $discounts[] = $discount;
         }
 
@@ -139,7 +162,21 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
     protected function getCouponTypes()
     {
-        return DiscountCouponTable::getCouponTypes(true);
+        $defaultValue = DiscountCouponTable::TYPE_ONE_ORDER;
+        $requestedValue = $this->request->get('TYPE');
+        $selectedValue = $requestedValue ? $requestedValue : $defaultValue;
+
+        $types = DiscountCouponTable::getCouponTypes(true);
+        $values = [];
+        foreach ($types as $code => $name) {
+            $values[] = [
+                'VALUE' => $code,
+                'NAME' => $name,
+                'SELECTED' => $selectedValue == $code
+            ];
+        }
+
+        return $values;
     }
 
     protected function handleAjax()
@@ -220,14 +257,34 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
         $progress->incrementStep();
 
+        $template = $progress->getSettings()->getTemplate();
+        $couponGenerator = $this->getCouponGenerator(
+            $this->getSequenceGenerator($this->getSequenceTemplate($template)),
+            $progress
+        );
+
+        $generatedCoupons = [];
         while ($countToGenerate > 0 && $totalTimeSpent < $stepTime) {
 
             try {
-                $progress->incrementProcessedCount();
-                $countToGenerate--;
+                $generationResult = $couponGenerator->generate(10);
+                $createdCoupons = $generationResult->getData()['COUPONS'];
+                $progress->incrementProcessedCount(count($createdCoupons));
+                $generatedCoupons += $createdCoupons;
+                $countToGenerate -= count($createdCoupons);
+                if (!$generationResult->isSuccess()) {
+                    throw new CouponGeneratorException(
+                        $generationResult->getErrorCollection()->current()->getMessage()
+                    );
+                }
             } catch (\Exception $e) {
                 $response->setStatus(500);
                 $response->setMessage($e->getMessage());
+                $response->setPayload([
+                    'progress_html' => $this->renderProgressHtml($progress),
+                    'report' => $this->getReport($progress),
+                ]);
+                $progress->setFinishDate(new \DateTime());
                 return $response;
             }
 
@@ -239,6 +296,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
             'progress_html' => $this->renderProgressHtml($progress),
             'next_action' => $progress->getProgressPercentage() < 100 ? 'generation_step' : 'generation_finish',
             'report' => $this->getReport($progress),
+            //'coupons' => $generatedCoupons
         ]);
 
         return $response;
@@ -248,28 +306,19 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     {
         $response = new JsonResponse();
         $settings = ProcessSettings::createFromRequest($request);
-        $progress->setSettings($settings);
+        $settingsValidationResult = $settings->validate();
+        if (!$settingsValidationResult->isSuccess()) {
+            $response->setStatus(400);
+            $message = implode('. ', $settingsValidationResult->getErrorMessages());
+            $response->setMessage($message);
+            return $response;
+        }
 
         if ($progress->getProcessedCount() > 0) {
             $progress->clear();
         }
 
         $progress->setStartDate(new \DateTime());
-
-        // TODO Полная валидация формы
-        $template = $settings->getTemplate();
-        if ($template === null) {
-            $response->setStatus(400);
-            $response->setMessage('Указан пустой шаблон');
-            return $response;
-        }
-
-        $count = $settings->getCount();
-        if (!$count || $count <= 0) {
-            $response->setStatus(400);
-            $response->setMessage('Необходимо установить количество промокодов для генерации');
-            return $response;
-        }
 
         $progress->setSettings($settings);
 
@@ -304,13 +353,19 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     {
         $template = $request->get('template');
 
-        $preview = $template;
         $response = new JsonResponse();
 
         if (strlen($template) === 0) {
             $response->setStatus(500);
             $response->setMessage('Указан пустой шаблон');
         } else {
+
+            $generator = $this->getSequenceGenerator(
+                $this->getSequenceTemplate($template)
+            );
+
+            $preview = $generator->generateSeveral(20);
+
             $response->setStatus(200);
             $response->setPayload([
                 'preview' => $preview,
@@ -342,5 +397,29 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     {
         $report = new ProcessReport($progress);
         return $report->asArray();
+    }
+
+    protected function getSequenceTemplate($templateString)
+    {
+        $template = new SequenceTemplate();
+        $template->setTemplate($templateString);
+        $template->addPlaceholder('@', new RussianLettersCollection());
+        $template->addPlaceholder('$', new EnglishLettersCollection());
+        $template->addPlaceholder('#', new DigitsCollection());
+
+        return $template;
+    }
+
+    protected function getSequenceGenerator(SequenceTemplateInterface $template)
+    {
+        $generator = new SequenceGenerator();
+        $generator->setTemplate($template);
+        return $generator;
+    }
+
+    protected function getCouponGenerator(SequenceGenerator $generator, ProcessProgress $progress)
+    {
+        $couponGenerator = new CouponGenerator($generator, $progress->getSettings());
+        return $couponGenerator;
     }
 }

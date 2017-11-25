@@ -7,7 +7,7 @@ class SymbolsCollection implements SymbolsCollectionInterface
     protected $symbols = '';
     protected $count = 0;
 
-    public function __construct($symbols)
+    public function __construct($symbols = '')
     {
         if (strlen($symbols) > 0) {
             $this->symbols = $symbols;
@@ -38,12 +38,13 @@ class SymbolsCollection implements SymbolsCollectionInterface
             throw new SymbolsCollectionException("В наборе символов нет символа под номером {$number}");
         }
 
-        return $this->getSymbols()[ $number ];
+        return substr($this->getSymbols(), $number, 1);
     }
 
     public function getRandomOne()
     {
         $randomNumber = rand(0, $this->getCount() - 1);
-        return $this->getOne($randomNumber);
+        $letter =  $this->getOne($randomNumber);
+        return $letter;
     }
 }
