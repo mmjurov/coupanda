@@ -15,8 +15,17 @@ class SequenceTemplate implements SequenceTemplateInterface
         $this->template = $template;
     }
 
+    protected function symbolExists($symbol)
+    {
+        return strpos($this->template, $symbol) !== false;
+    }
+
     public function addPlaceholder($placeholder, SymbolsCollectionInterface $collection)
     {
+        if (!$this->symbolExists($placeholder)) {
+            return $this;
+        }
+
         $this->resetChunks();
         $this->placeholders[ $placeholder ] = $collection;
         return $this;
@@ -37,6 +46,10 @@ class SequenceTemplate implements SequenceTemplateInterface
         return $this->placeholders;
     }
 
+    /**
+     * @param $placeholder
+     * @return SymbolsCollectionInterface
+     */
     public function getPlaceholderCollection($placeholder)
     {
         return $this->isPlaceholder($placeholder) ?
@@ -46,7 +59,18 @@ class SequenceTemplate implements SequenceTemplateInterface
 
     public function calculateCombinationsCount()
     {
-        // TODO: Implement calculateCombinationsCount() method.
+        $count = 0;
+        $templateWord = $this->template;
+        while (strlen($templateWord) > 0) {
+            $symbol = substr($templateWord, 0, 1);
+            if ($this->isPlaceholder($symbol)) {
+                $collection = $this->getPlaceholderCollection($symbol);
+                $count = $count === 0 ? $collection->getCount() : $count * $collection->getCount();
+            }
+            $templateWord = substr($templateWord, 1);
+        }
+
+        return $count;
     }
 
     public function isPlaceholder($symbol)

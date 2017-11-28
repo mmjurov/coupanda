@@ -9,7 +9,6 @@ use Bitrix\Main\Entity\FieldError;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\TextField;
 use Bitrix\Main\Localization\Loc;
-use Maximaster\Coupanda\Process\ProcessReport;
 use Maximaster\Coupanda\Process\ProcessSettings;
 
 Loc::loadMessages(__FILE__);
@@ -37,6 +36,10 @@ class ProcessTable extends DataManager
                 'default_value' => null,
                 'title' => Loc::getMessage('PROCESS_ENTITY_FINISHED_AT_FIELD')
             ]),
+            'PROCESSED_COUNT' => new IntegerField('PROCESSED_COUNT', [
+                'default_value' => 0,
+                'title' => 'Количество обработанных элементов'
+            ]),
             'SETTINGS' => new TextField('SETTINGS', [
                 'required' => true,
                 'serialized' => true,
@@ -45,14 +48,6 @@ class ProcessTable extends DataManager
                 },
                 'title' => Loc::getMessage('PROCESS_ENTITY_SETTINGS_FIELD')
             ]),
-            'REPORT' => new TextField('REPORT', [
-                'required' => true,
-                'serialized' => true,
-                'validation' => function() {
-                    return [[__CLASS__, 'validateReportInstance']];
-                },
-                'title' => Loc::getMessage('PROCESS_ENTITY_REPORT_FIELD')
-            ]),
         ];
     }
 
@@ -60,15 +55,6 @@ class ProcessTable extends DataManager
     {
         if (!$value instanceof ProcessSettings) {
             return new FieldError($field, Loc::getMessage('PROCESS_ENTITY_SETTINGS_FIELD_NOT_VALID'), 'VALIDATION_ERROR');
-        }
-
-        return true;
-    }
-
-    public static function validateReportInstance($value, $primary, array $row, Field $field)
-    {
-        if (!$value instanceof ProcessReport) {
-            return new FieldError($field, Loc::getMessage('PROCESS_ENTITY_REPORT_FIELD_NOT_VALID'), 'VALIDATION_ERROR');
         }
 
         return true;

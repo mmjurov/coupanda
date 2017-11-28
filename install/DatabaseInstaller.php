@@ -80,10 +80,16 @@ class DatabaseInstaller
     protected function createProcessTable()
     {
         $tableName = ProcessTable::getTableName();
-        if (!$this->connection->isTableExists($tableName)) {
-            $this->connection->createTable(ProcessTable::getTableName(),
-                ProcessTable::getMap(), ['ID'], ['ID']);
-        }
+        $query = "CREATE TABLE `{$tableName}` (
+          `ID` int(11) NOT NULL AUTO_INCREMENT,
+          `STARTED_AT` datetime NOT NULL,
+          `FINISHED_AT` datetime DEFAULT NULL,
+          `PROCESSED_COUNT` int(11) DEFAULT 0,
+          `SETTINGS` text NOT NULL,
+          PRIMARY KEY (`ID`)
+        )";
+
+        $this->connection->queryExecute($query);
     }
 
     protected function dropProcessTable()

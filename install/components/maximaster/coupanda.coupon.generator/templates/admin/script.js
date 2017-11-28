@@ -27,6 +27,12 @@ jQuery(function () {
         var isRunning = false;
 
         /**
+         * Идентификатор запущенного процесса
+         * @type {int}
+         */
+        var pid;
+
+        /**
          * Идентификатор сессии
          * @type {string}
          */
@@ -72,7 +78,7 @@ jQuery(function () {
                     }
 
                     if (response.status < 200 || response.status >= 300) {
-                        error(response.message);
+                        error(response.message, response);
                         return false;
                     }
 
@@ -112,7 +118,7 @@ jQuery(function () {
             coupanda_generator.SelectTab(tab);
         };
 
-        this.bindEvents = function () {
+        this.bindEvents = function() {
 
             var formId = 'js-generator-settings';
             var form = document.getElementById(formId);
@@ -123,7 +129,6 @@ jQuery(function () {
             }
 
             var $form = $(form);
-
             checkMaxUseAvailability(form);
 
             $form.on('submit', function (event) {
@@ -165,22 +170,30 @@ jQuery(function () {
 
             render(response);
 
-            if (response.payload.init && response.payload.init == 'ok') {
+            if (!pid) {
+                pid = response.payload.pid;
+            }
+
+            if (!pid) {
+                generationError('Сервер не вернул pid', response);
+            } else {
                 switchTab('progress');
             }
 
             if (response.payload.next_action) {
-                makeActionRequest(response.payload.next_action, 'sessid=' + sessionId, generationSuccess, generationError);
+                makeActionRequest(response.payload.next_action, 'sessid=' + sessionId + '&pid=' + pid, generationSuccess, generationError);
             } else {
                 switchTab('report');
                 isRunning = false;
+                pid = undefined;
                 showPopup(response.message);
             }
         };
 
         var generationError = function(errorMessage, response) {
             isRunning = false;
-            render(response);
+            pid = undefined;
+            response && render(response);
             showPopup(errorMessage);
         };
 
@@ -220,6 +233,10 @@ jQuery(function () {
         };
 
         var checkMaxUseAvailability = function(form) {
+            if (form.elements.length <= 0) {
+                return;
+            }
+
             var maxUseCount = form.elements.MAX_USE_COUNT;
             var couponType = form.elements['TYPE'];
 
@@ -227,6 +244,7 @@ jQuery(function () {
         };
     };
 
+    // TODO при входе после потери авторизации событие не навешивается по причине отсутствия элементов формы
     var generator = new Generator();
     generator.bindEvents();
 });

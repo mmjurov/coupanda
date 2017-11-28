@@ -30,7 +30,7 @@ class JsonResponse
         $data = [
             'status' => $this->status,
             'message' => $this->message,
-            'payload' => $this->payload
+            'payload' => empty($this->payload) ? new \stdClass() : $this->payload
         ];
 
         return Json::encode($data);

@@ -9,6 +9,7 @@ class SequenceGenerator implements SequenceGeneratorInterface
 {
     /** @var SequenceTemplateInterface */
     protected $template;
+    protected $combinationsCount;
     /** @var SymbolsCollectionInterface[] */
     protected $collections = [];
     protected $generatedCodes = [];
@@ -16,11 +17,20 @@ class SequenceGenerator implements SequenceGeneratorInterface
     public function setTemplate(SequenceTemplateInterface $template)
     {
         $this->template = $template;
+        $this->combinationsCount = $template->calculateCombinationsCount();
     }
 
     public function generateUniqueOne()
     {
         $generationsCount = 0;
+        $count = $this->getGeneratedCount();
+        if ($count > 1000000) {
+            throw new SequenceGeneratorException('Максимальное возможное количество купонов для генерации в рамках одного хита - 1000000');
+        }
+
+        if ($count > $this->combinationsCount) {
+            throw new SequenceGeneratorException('Максимальное количество комбинаций символов для выбранного шаблона - ' . $this->combinationsCount);
+        }
 
         do {
             $generatedCode = $this->generateOne();
@@ -74,7 +84,7 @@ class SequenceGenerator implements SequenceGeneratorInterface
                 $count--;
             }
         } catch (SequenceGeneratorException $e) {
-            throw new SequenceGeneratorException('Не удалось сгенерировать достаточное количество последовательностей. Шаблон содержит недостаточное количество возможных вариаций для генерации. Попробуйте увеличить количество генерируемых символов');
+            throw new SequenceGeneratorException('Не удалось сгенерировать указанное количество последовательностей. ' . $e->getMessage(), $e->getCode(), $e);
         }
 
         return $codes;
