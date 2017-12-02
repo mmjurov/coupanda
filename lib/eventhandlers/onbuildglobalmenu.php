@@ -19,6 +19,11 @@ class OnBuildGlobalMenu
 
     public static function addGeneratorToMenu(&$globalMenu, &$moduleMenu)
     {
+        global $APPLICATION;
+        if ($APPLICATION->GetGroupRight('maximaster.coupanda') < 'W') {
+            return;
+        }
+
         $rootMenu = null;
         //Сначала найдем пункт с маркетингом
         foreach ($moduleMenu as &$rootMenuItem) {

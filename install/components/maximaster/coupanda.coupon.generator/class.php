@@ -70,6 +70,9 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
     }
 
+    /**
+     * @throws SystemException
+     */
     protected function checkPermissions()
     {
         global $APPLICATION;
