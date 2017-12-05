@@ -126,7 +126,15 @@ namespace Maximaster\Coupanda\Generator\AdminTemplate;
             <?= getHint('user', 'Все купоны из пула будут принадлежать одному человеку и только он сможет ими воспользоваться'); ?>
             <label for="user">Владелец:</label></td>
         <td>
-            <?= \FindUserID('USER_ID', null, '', 'coupon_generator_form'); ?>
+            <?=\FindUserID('USER_ID', null, '', 'coupon_generator_form'); ?>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <?= getHint('description', 'Описание, которое будет присвоено каждому купону'); ?>
+            <label for="description">Описание:</label></td>
+        <td>
+            <textarea name="DESCRIPTION" id="description" cols="30" rows="5"></textarea>
         </td>
     </tr>
     <tr>

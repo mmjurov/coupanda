@@ -55,6 +55,10 @@ class CouponGenerator
             $coupon['USER_ID'] = $settings->getUserId();
         }
 
+        if ($settings->getDescription()) {
+            $coupon['DESCRIPTION'] = $settings->getDescription();
+        }
+
         $coupon['MAXIMASTER_COUPANDA_PID'] = $this->process->getId();
         $this->commonCouponDefinition = $coupon;
     }
