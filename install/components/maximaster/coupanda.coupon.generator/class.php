@@ -13,6 +13,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals\DiscountCouponTable;
 use Bitrix\Sale\Internals\DiscountTable;
+use Maximaster\Coupanda\Compability\CompabilityChecker;
 use Maximaster\Coupanda\Generator\Collections\DigitsCollection;
 use Maximaster\Coupanda\Generator\Collections\EnglishLettersCollection;
 use Maximaster\Coupanda\Generator\Collections\RussianLettersCollection;
@@ -341,6 +342,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
      */
     protected function ajaxGenerationStart(HttpRequest $request)
     {
+        $this->checkCompability();
         $response = new JsonResponse();
         $settings = ProcessSettings::createFromRequest($request);
 
@@ -531,5 +533,17 @@ class CoupandaCouponGenerator extends \CBitrixComponent
             'permission' => $permission,
             'request' => $this->request->toArray(),
         ];
+    }
+
+    protected function checkCompability()
+    {
+        $checker = new CompabilityChecker();
+        $result = $checker->check();
+        if (!$result->isSuccess()) {
+            $message = implode('. ', $result->getErrorMessages());
+            throw new \LogicException('Невозможно использовать функционал генератора. ' . $message);
+        }
+
+        return true;
     }
 }

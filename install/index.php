@@ -4,6 +4,7 @@ use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Application;
 use \Maximaster\Coupanda\DatabaseInstaller;
 use \Maximaster\Coupanda\FileInstaller;
+use Maximaster\Coupanda\Compability\CompabilityChecker;
 
 if (\class_exists('maximaster_coupanda')) {
     return;
@@ -158,6 +159,10 @@ class maximaster_coupanda extends \CModule
 
     public function InstallDB()
     {
+        if (!$this->checkCompability()) {
+            return false;
+        }
+
         $connection = Application::getConnection();
         $installer = new DatabaseInstaller($this->MODULE_ID, $connection);
         try {
@@ -175,6 +180,11 @@ class maximaster_coupanda extends \CModule
     public function InstallFiles()
     {
         global $APPLICATION;
+
+        if (!$this->checkCompability()) {
+            return false;
+        }
+
         try {
             $installer = new FileInstaller(__DIR__ . '/../', Application::getDocumentRoot());
             $installer->install();
@@ -230,6 +240,20 @@ class maximaster_coupanda extends \CModule
 
     public function UninstallEvents()
     {
+        return true;
+    }
+
+    protected function checkCompability()
+    {
+        include_once __DIR__ . '/../lib/compability/compabilitychecker.php';
+        $checker = new CompabilityChecker();
+        $result = $checker->check();
+        if (!$result->isSuccess()) {
+            global $APPLICATION;
+            $APPLICATION->ThrowException(implode('. ', $result->getErrorMessages()));
+            return false;
+        }
+
         return true;
     }
 }
