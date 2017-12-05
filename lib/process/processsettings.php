@@ -182,8 +182,10 @@ class ProcessSettings
 
     public function validate()
     {
+        // TODO Сделать полную проверку всех полей
         $result = new Result();
-        if ($this->getTemplate() === null) {
+        $template = $this->getTemplate();
+        if ($template === null) {
             $result->addError(new Error('Указан пустой шаблон'));
         }
 
