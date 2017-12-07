@@ -3,6 +3,7 @@
 namespace Maximaster\Coupanda\Generator;
 
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use Maximaster\Coupanda\Orm\DiscountCouponTable;
@@ -75,7 +76,7 @@ class CouponGenerator
     {
         $result = new Result();
         if ($countToGenerate < 1) {
-            $result->addError(new Error('Не указано количество для генерации купонов'));
+            $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR:COUNT_NOT_PROVIDED')));
             $result->setData([
                 'COUPONS' => []
             ]);
@@ -105,9 +106,11 @@ class CouponGenerator
         ]);
 
         if (count($errors) > 0 && $lastError !== null) {
-            $message = $lastError->getMessage();
-            $message = "Мы попытались сделать 10 попыток добавления разных купонов подряд, но судя по всему, лимит уникальности был исчерпан. Попробуйте сделать шаблон купона более уникальным. Последнее сообщение об ошибке при добавлении купона с кодом \"{$code}\": {$message}";
-            $result->addError(new Error('Не удалось сгенерировать заданное количество купонов. ' . $message));
+            $errorMessage = $lastError->getMessage();
+            $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR:UNIQUE_LIMIT_EXCEEDED', [
+                'CODE' => $code,
+                'MESSAGE' => $errorMessage
+            ])));
         }
 
         return $result;

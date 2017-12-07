@@ -4,6 +4,7 @@ namespace Maximaster\Coupanda\Process;
 
 use Bitrix\Main\Error;
 use Bitrix\Main\HttpRequest;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Maximaster\Coupanda\Orm\DiscountCouponTable;
 
@@ -205,16 +206,16 @@ class ProcessSettings
         $result = new Result();
         $template = $this->getTemplate();
         if ($template === null) {
-            $result->addError(new Error('Указан пустой шаблон'));
+            $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:PROCESS.VALIDATE:TEMPLATE_EMPTY')));
         }
 
         $count = $this->getCount();
         if (!$count || $count <= 0) {
-            $result->addError(new Error('Необходимо установить количество промокодов для генерации'));
+            $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:PROCESS.VALIDATE:COUNT')));
         }
 
         if ($this->getDiscountId() === null) {
-            $result->addError(new Error('Не задано правило обработки корзины'));
+            $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:PROCESS.VALIDATE:DISCOUNT')));
         }
 
         $typeAvailable = in_array($this->getType(), [
@@ -224,12 +225,12 @@ class ProcessSettings
         ]);
 
         if (!$typeAvailable) {
-            $result->addError(new Error('Задан некорректный тип купона'));
+            $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:PROCESS.VALIDATE:TYPE')));
         }
 
         $maxUse = $this->getMaxUseCount();
         if ($this->getType() == DiscountCouponTable::TYPE_MULTI_ORDER && $maxUse <= 0) {
-            $result->addError(new Error('Для многоразовых купонов необходимо установить максимальное количество использований'));
+            $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:PROCESS.VALIDATE:MAX_USE')));
         }
 
         return $result;

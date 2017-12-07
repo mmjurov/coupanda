@@ -24,9 +24,11 @@ use Maximaster\Coupanda\Generator\SequenceGenerator;
 use Maximaster\Coupanda\Generator\Template\SequenceTemplate;
 use Maximaster\Coupanda\Generator\Template\SequenceTemplateInterface;
 use Maximaster\Coupanda\Http\JsonResponse;
+use Maximaster\Coupanda\Log\FileLogger;
 use Maximaster\Coupanda\Log\Logger;
 use Maximaster\Coupanda\Log\LoggerFactory;
 use Maximaster\Coupanda\Log\LoggerInterface;
+use Maximaster\Coupanda\Log\NullLogger;
 use Maximaster\Coupanda\Process\Process;
 use Maximaster\Coupanda\Process\ProcessRepository;
 use Maximaster\Coupanda\Process\ProcessSettings;
@@ -68,7 +70,11 @@ class CoupandaCouponGenerator extends \CBitrixComponent
         } catch (\Exception $e) {
             $loggerContext['message'] = $e->getMessage();
             $loggerContext['code'] = $e->getCode();
-            $logger->notice('Ошибка в процессе обработки запроса. [{code}] {message}', $loggerContext);
+            $logger->notice(
+                Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:LOG.QUERY.ERROR') . ' [{code}] {message}',
+                $loggerContext
+            );
+
             \ShowError($e->getMessage());
             return null;
         }
@@ -78,7 +84,9 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     {
         array_map(function ($moduleId) {
             if (!Loader::includeModule($moduleId)) {
-                throw new SystemException('Для продолжения работы необходимо установить модуль ' . $moduleId);
+                throw new SystemException(
+                    Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:NEED.INSTALL.MODULE', ['MODULE' => $moduleId])
+                );
             }
         }, ['sale', 'maximaster.coupanda']);
 
@@ -92,7 +100,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
         global $APPLICATION;
         $permission = $APPLICATION->GetGroupRight('maximaster.coupanda');
         if ($permission < 'W') {
-            throw new SystemException('Недостаточно прав для использования генератора');
+            throw new SystemException(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:NOT_ENOUGH_PERMISSIONS'));
         }
     }
 
@@ -114,7 +122,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     protected function setPageParameters()
     {
         global $APPLICATION;
-        $APPLICATION->SetTitle('Генератор купонов');
+        $APPLICATION->SetTitle(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:TITLE'));
     }
 
     protected function setAdminContextMenu()
@@ -212,25 +220,25 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
         $logger = $this->getLogger();
         $loggerContext = $this->getLoggerContext();
-        $logger->debug('Ajax запрос {request}', $loggerContext);
+        $logger->debug(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:AJAX.REQUEST') . ' {request}', $loggerContext);
 
         try {
             if (!check_bitrix_sessid()) {
-                throw new SystemException('Ваша сессия истекла. Перезагрузите страницу');
+                throw new SystemException(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:SESSION_EXPIRED'));
             }
 
             $ajaxResponse = $this->handleAjaxAction($request);
             if (!($ajaxResponse instanceof JsonResponse)) {
-                throw new \LogicException('Произошла неизвестная ошибка работы с модулем. Обратитесь в техническую поддержку');
+                throw new \LogicException(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:UNKNOWN_ERROR'));
             }
 
             $loggerContext['response'] = $ajaxResponse->render();
-            $logger->debug('Ajax ответ {response}', $loggerContext);
+            $logger->debug(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:AJAX.RESPONSE') . ' {response}', $loggerContext);
 
         } catch (\Exception $e) {
             $loggerContext['message'] = $e->getMessage();
             $loggerContext['code'] = $e->getCode();
-            $logger->notice('Ошибка в процессе обработки ajax запроса. [{code}] {message}', $loggerContext);
+            $logger->notice(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:AJAX.ERROR') . ' [{code}] {message}', $loggerContext);
 
             $ajaxResponse = new JsonResponse();
             $ajaxResponse->setStatus(500);
@@ -269,7 +277,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
         $response = new JsonResponse();
         $response->setStatus(400);
-        $response->setMessage('Действие ' . $action . ' недоступно');
+        $response->setMessage(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:INVALID_ACTION', ['ACTION' => $action]));
         return $response;
     }
 
@@ -288,7 +296,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
         if (!$process->isInProgress()) {
             $response->setStatus(400);
-            $response->setMessage('Попытка выполнить запрос на генерацию без инициализации. Попробуйте начать процесс заново');
+            $response->setMessage(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:NOT_INITIALIZED'));
             return $response;
         }
 
@@ -370,7 +378,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
         ProcessRepository::save($process);
 
         $response->setStatus(200);
-        $response->setMessage('Инициализация успешно завершена');
+        $response->setMessage(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:INITIALIZED'));
         $response->setPayload([
             'pid' => $process->getId(),
             'progress_html' => $this->renderProgressHtml($process),
@@ -393,20 +401,20 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
         if (!$process) {
             $response->setStatus(400);
-            $response->setMessage('Не удалось подцепить процесс. Попробуйте начать процесс заново');
+            $response->setMessage(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:PROCESS_NOT_FOUND'));
             return $response;
         }
 
         if ($process->getProgressPercentage() < 100) {
             $response->setStatus(400);
-            $response->setMessage('Процесс еще не завершен');
+            $response->setMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:PROCESS_IN_PROGRESS');
             return $response;
         }
 
         $process->setFinishedAt(new DateTime());
 
         $response->setStatus(200);
-        $response->setMessage('Процесс импорта успешно завершен');
+        $response->setMessage(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:PROCESS_COMPLETED'));
         $response->setPayload([
             'progress_html' => $this->renderProgressHtml($process),
             'report' => $this->getReport($process),
@@ -421,7 +429,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     {
         $processId = $request->get('pid');
         if (!$processId) {
-            throw new \LogicException('Не указан идентификатор процесса');
+            throw new \LogicException(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:NO_PID'));
         }
 
         return ProcessRepository::findOneById($processId);
@@ -435,7 +443,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
         if (strlen($template) === 0) {
             $response->setStatus(500);
-            $response->setMessage('Указан пустой шаблон');
+            $response->setMessage(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:NO_TEMPLATE'));
         } else {
 
             $generator = $this->getSequenceGenerator(
@@ -455,11 +463,11 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
     protected function renderProgressHtml(Process $process)
     {
-        $message = 'Сгенерировано #PROGRESS_VALUE# из #PROGRESS_TOTAL# (#PROGRESS_PERCENT#)';
+        $message = Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:PROGRESS_TEMPLATE');
         if ($process->getProcessedCount() == 0) {
-            $message = 'Инициализация ...';
+            $message = Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:PROGRESS_INIT');
         } elseif ($process->getProgressPercentage() === 100) {
-            $message = 'Процесс успешно завершен!';
+            $message = Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:PROGRESS_FINISHED');
         }
 
         $progressMessage = new \CAdminMessage([
@@ -481,17 +489,17 @@ class CoupandaCouponGenerator extends \CBitrixComponent
         return [
             [
                 'code' => 'started_at',
-                'name' => 'Дата начала',
+                'name' => Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:REPORT_DATE_START'),
                 'value' => $startedAt,
             ],
             [
                 'code' => 'finished_at',
-                'name' => 'Дата окончания',
+                'name' => Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:REPORT_DATE_FINISH'),
                 'value' => $finishedAt,
             ],
             [
                 'code' => 'count',
-                'name' => 'Количество',
+                'name' => Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:REPORT_COUNT'),
                 'value' => $process->getProcessedCount(),
             ]
         ];
@@ -525,7 +533,18 @@ class CoupandaCouponGenerator extends \CBitrixComponent
     {
         $logLevelOption = Option::get('maximaster.coupanda', 'log_level', 'none');
         if ($this->logger === null) {
-            $this->logger = LoggerFactory::get($logLevelOption);
+            switch ($logLevelOption) {
+                case 'all':
+                    $this->logger = new FileLogger();
+                    break;
+                case 'errors':
+                    $this->logger = new FileLogger(true);
+                    break;
+                case 'none':
+                default:
+                    $this->logger = new NullLogger();
+                    break;
+            }
         }
 
         return $this->logger;
@@ -551,7 +570,7 @@ class CoupandaCouponGenerator extends \CBitrixComponent
         $result = $checker->check();
         if (!$result->isSuccess()) {
             $message = implode('. ', $result->getErrorMessages());
-            throw new \LogicException('Невозможно использовать функционал генератора. ' . $message);
+            throw new \LogicException(Loc::getMessage('MAXIMASTER.COUPANDA:COUPON.GENERATOR:CANT_USE', ['MESSAGE' => $message]));
         }
 
         return true;

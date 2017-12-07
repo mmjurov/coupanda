@@ -2,6 +2,7 @@
 
 namespace Maximaster\Coupanda\Generator;
 
+use Bitrix\Main\Localization\Loc;
 use Maximaster\Coupanda\Generator\Collections\SymbolsCollectionInterface;
 use Maximaster\Coupanda\Generator\Template\SequenceTemplateInterface;
 
@@ -25,11 +26,11 @@ class SequenceGenerator implements SequenceGeneratorInterface
         $generationsCount = 0;
         $count = $this->getGeneratedCount();
         if ($count > 1000000) {
-            throw new SequenceGeneratorException('Максимальное возможное количество купонов для генерации в рамках одного хита - 1000000');
+            throw new SequenceGeneratorException(Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR:GENERATOR_LIMIT_EXCEEDED'));
         }
 
         if ($count > $this->combinationsCount) {
-            throw new SequenceGeneratorException('Максимальное количество комбинаций символов для выбранного шаблона - ' . $this->combinationsCount);
+            throw new SequenceGeneratorException(Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR:MAX_GENERATION_COUNT', ['COUNT' => $this->combinationsCount]));
         }
 
         do {
@@ -38,7 +39,7 @@ class SequenceGenerator implements SequenceGeneratorInterface
             $alreadyExists = isset($this->generatedCodes[$generatedCode]);
 
             if ($generationsCount > 10) {
-                throw new SequenceGeneratorException('Не удалось подобрать уникальную последовательность символов на протяжении десяти попыток. Попробуйте добавить в шаблон больше генерируемых символов');
+                throw new SequenceGeneratorException(Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR:NOT_ENOUGH_UNIQUE'));
             }
 
         } while ($alreadyExists);
@@ -84,7 +85,13 @@ class SequenceGenerator implements SequenceGeneratorInterface
                 $count--;
             }
         } catch (SequenceGeneratorException $e) {
-            throw new SequenceGeneratorException('Не удалось сгенерировать указанное количество последовательностей. ' . $e->getMessage(), $e->getCode(), $e);
+            throw new SequenceGeneratorException(
+                Loc::getMessage(
+                    'MAXIMASTER.COUPANDA:GENERATOR:CANT_GENERATE_PROVIDED_COUNT',
+                    ['MESSAGE' => $e->getMessage()]
+                ),
+                $e->getCode(), $e
+            );
         }
 
         return $codes;

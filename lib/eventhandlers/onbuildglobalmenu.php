@@ -2,17 +2,19 @@
 
 namespace Maximaster\Coupanda\EventHandlers;
 
+use Bitrix\Main\Localization\Loc;
+
 class OnBuildGlobalMenu
 {
     private static function getMenuItem()
     {
         return [
-            'text' => 'Генератор купонов',
+            'text' => Loc::getMessage('MAXIMASTER.COUPANDA:MENU:GENERATOR'),
             'url' => '/bitrix/admin/maximaster.coupanda_generator.php',
             'more_url' => [],
             //'page_icon' => 'maximaster_coupanda',
             //'icon' => 'maximaster_coupanda',F
-            'title' => 'Генератор купонов',
+            'title' => Loc::getMessage('MAXIMASTER.COUPANDA:MENU:GENERATOR'),
             'items_id' => 'maximaster_coupanda_generator'
         ];
     }

@@ -3,6 +3,7 @@
 namespace Maximaster\Coupanda\Compability;
 
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Result;
 
@@ -12,10 +13,10 @@ class CompabilityChecker
     {
         $result = new Result();
         if (!$this->isSaleInstalled()) {
-            $result->addError(new Error('Модуль "Интернет-магазин" не установлен. Необходимо установить модуль'));
+            $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:SALE_IS_NOT_INSTALLED')));
         } else {
             if (!$this->isSaleVersionCompatible()) {
-                $result->addError(new Error('Версия модуля "Интернет-магазин" является слишком старой'));
+                $result->addError(new Error(Loc::getMessage('MAXIMASTER.COUPANDA:SALE_IS_VERY_OLD')));
             }
         }
 

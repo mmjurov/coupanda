@@ -1,5 +1,10 @@
 <?php
 
-$MESS['COUPANDA:LOG_LEVEL:NONE'] = 'Отключено';
-$MESS['COUPANDA:LOG_LEVEL:ERROR'] = 'Только ошибки';
-$MESS['COUPANDA:LOG_LEVEL:ALL'] = 'Полное логирование';
+$MESS['MAXIMASTER.COUPANDA:LOG_LEVEL:NONE'] = 'Отключено';
+$MESS['MAXIMASTER.COUPANDA:LOG_LEVEL:ERROR'] = 'Только ошибки';
+$MESS['MAXIMASTER.COUPANDA:LOG_LEVEL:ALL'] = 'Полное логирование';
+$MESS['MAXIMASTER.COUPANDA:MODULE_OPTIONS'] = 'Настройки модуля';
+$MESS['MAXIMASTER.COUPANDA:MODULE_ACCESS_OPTIONS'] = 'Настройки доступа к модулю';
+$MESS['MAXIMASTER.COUPANDA:LOGGING'] = 'Логирование';
+$MESS['MAXIMASTER.COUPANDA:SAVE'] = 'Сохранить';
+$MESS['MAXIMASTER.COUPANDA:ACCESS_DENIED'] = 'Доступ к настройкам модуля запрещен';

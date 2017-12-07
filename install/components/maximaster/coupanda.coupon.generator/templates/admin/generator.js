@@ -58,7 +58,7 @@ jQuery(function () {
          * @param {function} error
          */
         var makeActionRequest = function (action, data, success, error) {
-            data += (data.length > 0 ? '&' : '') + 'ajax_action=' + action;
+            data += (data.length > 0 ? '&' : '') + 'ajax_action=' + action + '&lang=' + window.phpVars.LANGUAGE_ID;
             $.ajax({
                 url: window.location.href,
                 type: 'POST',
@@ -73,7 +73,7 @@ jQuery(function () {
                         || response.message === undefined
                         || response.payload === undefined
                     ) {
-                        error('Произошла ошибка на сервере. Ответ был сформирован в формате, неподдерживаемом данным клиентом');
+                        error(BX.message['COUPANDA.GENERATOR:INVALID_RESPONSE']);
                         return false;
                     }
 
@@ -89,7 +89,7 @@ jQuery(function () {
 
                 },
                 error: function() {
-                    error('Произошла ошибка. Обновите страницу');
+                    error(BX.message['COUPANDA.GENERATOR:UNKNOWN_ERROR']);
                 },
                 beforeSend: function() {
                     ShowWaitWindow();
@@ -124,7 +124,7 @@ jQuery(function () {
             var form = document.getElementById(formId);
 
             if (!form) {
-                error('Форма с настройками не найдена на странице. Попробуйте перезагрузить страницу');
+                error(BX.message['COUPANDA.GENERATOR:FORM_NOT_FOUND']);
                 return;
             }
 
@@ -133,7 +133,7 @@ jQuery(function () {
 
             $form.on('submit', function (event) {
                 if (isRunning) {
-                    showPopup('Процесс уже запущен. Необходимо дождаться завершения');
+                    showPopup(BX.message['COUPANDA.GENERATOR:ALREADY_RUNNING']);
                     return false;
                 }
 
@@ -153,7 +153,7 @@ jQuery(function () {
             $('#js-coupon-generation-preview').on('click', function (event) {
 
                 if (isRunning) {
-                    showPopup('Процесс генерации запущен. Необходимо дождаться завершения');
+                    showPopup(BX.message['COUPANDA.GENERATOR:ALREADY_RUNNING']);
                     return false;
                 }
 
@@ -175,7 +175,7 @@ jQuery(function () {
             }
 
             if (!pid) {
-                generationError('Сервер не вернул pid', response);
+                generationError(BX.message['COUPANDA.GENERATOR:NO_PID'], response);
             } else {
                 switchTab('progress');
             }
@@ -202,10 +202,10 @@ jQuery(function () {
                 var previewReport = response.payload.preview.map(function (coupon) {
                     return '<span class="popup-window__preview-coupon">' + coupon + '</span>';
                 });
-                var header = '<p>' + response.payload.preview.length + ' примеров генерации</p>'
+                var header = '<p>' + response.payload.preview.length + ' ' + BX.message['COUPANDA.GENERATOR:EXAMPLES'] + '</p>'
                 showPopup(header + previewReport.join(''));
             } else {
-                previewError('Произошла ошибка, попробуйте снова');
+                previewError(BX.message['COUPANDA.GENERATOR:UNKNOWN_ERROR']);
             }
         };
 

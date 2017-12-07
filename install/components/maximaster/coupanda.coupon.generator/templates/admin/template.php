@@ -3,7 +3,7 @@
 namespace Maximaster\Coupanda\Generator\AdminTemplate;
 
 use \Bitrix\Main\Localization\Loc;
-\CJSCore::Init('window');
+
 function getHint($id, $hint)
 {
     $id = 'hint_' . $id;
@@ -27,31 +27,28 @@ HTML;
     }
 </style>
 <?=\BeginNote();?>
-Данная страница осуществляет процесс генерации новых купонов. Сначала нужно произвести настройку на вкладке "Настройка генерации",
-после подтверждения которых сразу же будет запущен процесс генерации, с которым можно ознакомиться на вкладке "Процесс генерации".
-После окончания генерации вся сводная информация о процессе будет доступна во вкладке "Отчет о генерации"
+<?=Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR_TEMPLATE.NOTE');?>
 <?=\EndNote();?>
 <?
-$buttons = [];
 
 $tabs = [
     [
         'DIV' => 'configuration',
-        'TAB' => 'Настройка генерации',
+        'TAB' => Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR_TEMPLATE.SETTINGS'),
         'ICON' => '',
-        'TITLE' => 'Настройка генерации'
+        'TITLE' => Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR_TEMPLATE.SETTINGS'),
     ],
     [
         'DIV' => 'progress',
-        'TAB' => 'Процесс генерации',
+        'TAB' => Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR_TEMPLATE.PROGRESS'),
         'ICON' => '',
-        'TITLE' => 'Процесс генерации'
+        'TITLE' => Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR_TEMPLATE.PROGRESS'),
     ],
     [
         'DIV' => 'report',
-        'TAB' => 'Отчет о генерации',
+        'TAB' => Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR_TEMPLATE.REPORT'),
         'ICON' => '',
-        'TITLE' => 'Отчет о генерации'
+        'TITLE' => Loc::getMessage('MAXIMASTER.COUPANDA:GENERATOR_TEMPLATE.REPORT'),
     ],
 ];
 

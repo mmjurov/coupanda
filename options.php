@@ -16,7 +16,7 @@ $moduleAccessLevel = $APPLICATION->GetGroupRight($moduleId);
 \IncludeModuleLangFile(__FILE__);
 
 if ($moduleAccessLevel < 'W') {
-    \ShowError('Доступ к модулю запрещен');
+    \ShowError(Loc::getMessage('MAXIMASTER.COUPANDA:ACCESS_DENIED'));
     return;
 }
 
@@ -46,15 +46,15 @@ Loc::loadMessages(__FILE__);
 $tabs = [
     [
         'DIV' => 'maximaster_coupanda_options',
-        'TAB' => 'Настройки модуля',
+        'TAB' => Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_OPTIONS'),
         'ICON' => '',
-        'TITLE' => 'Настройки модуля'
+        'TITLE' => Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_OPTIONS'),
     ],
     [
         'DIV' => 'maximaster_coupanda_access',
-        'TAB' => 'Доступ',
+        'TAB' => Loc::getMessage('MAXIMASTER.COUPANDA:MODULE_ACCESS_OPTIONS'),
         'ICON' => '',
-        'TITLE' => 'Настройки доступа к модулю'
+        'TITLE' => Loc::getMessage('MAXIMASTER.MAXIMASTER.COUPANDA:MODULE_ACCESS_OPTIONS'),
     ],
 ];
 $tabControl = new \CAdminTabControl('maximaster_coupanda_options', $tabs, true, true);
@@ -67,12 +67,12 @@ $tabControl->Begin();
     <?=bitrix_sessid_post()?>
     <?$tabControl->BeginNextTab();?>
     <tr>
-        <td width="50%"><label for="logging">Логирование</label>:</td>
+        <td width="50%"><label for="logging"><?=Loc::getMessage('MAXIMASTER.COUPANDA:LOGGING')?></label>:</td>
         <td width="50%">
             <select name="log_level" id="logging">
                 <?foreach ($logLevels as $level):?>
                     <option value="<?=$level?>" <?=$level === $logLevelOption ? 'selected' : ''?>>
-                        <?=Loc::getMessage('COUPANDA:LOG_LEVEL:' . ToUpper($level))?>
+                        <?=Loc::getMessage('MAXIMASTER.COUPANDA:LOG_LEVEL:' . ToUpper($level))?>
                     </option>
                 <?endforeach;?>
             </select>
@@ -81,7 +81,7 @@ $tabControl->Begin();
     <?$tabControl->BeginNextTab();?>
     <?require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/admin/group_rights.php';?>
     <?$tabControl->Buttons();?>
-    <input type="submit" value="Сохранить">
+    <input type="submit" value="<?=Loc::getMessage('MAXIMASTER.COUPANDA:SAVE')?>">
     <input type="hidden" name="Update" value="Y">
     <?$tabControl->End();?>
 </form>
