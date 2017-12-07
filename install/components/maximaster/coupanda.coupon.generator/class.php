@@ -5,6 +5,7 @@ namespace Maximaster\Coupanda;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\Loader;
@@ -24,13 +25,15 @@ use Maximaster\Coupanda\Generator\Template\SequenceTemplate;
 use Maximaster\Coupanda\Generator\Template\SequenceTemplateInterface;
 use Maximaster\Coupanda\Http\JsonResponse;
 use Maximaster\Coupanda\Log\Logger;
+use Maximaster\Coupanda\Log\LoggerFactory;
+use Maximaster\Coupanda\Log\LoggerInterface;
 use Maximaster\Coupanda\Process\Process;
 use Maximaster\Coupanda\Process\ProcessRepository;
 use Maximaster\Coupanda\Process\ProcessSettings;
 
 class CoupandaCouponGenerator extends \CBitrixComponent
 {
-    /** @var Logger $logger */
+    /** @var LoggerInterface $logger */
     protected $logger = null;
 
     public function onPrepareComponentParams($params)
@@ -48,6 +51,9 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
     public function executeComponent()
     {
+        $logger = $this->getLogger();
+        $loggerContext = $this->getLoggerContext();
+
         $this->setFrameMode(false);
         $isAjax = $this->isAjaxRequest() && $this->request->isPost();
         try {
@@ -60,8 +66,6 @@ class CoupandaCouponGenerator extends \CBitrixComponent
                 return $this->handle();
             }
         } catch (\Exception $e) {
-            $logger = $this->getLogger();
-            $loggerContext = $this->getLoggerContext();
             $loggerContext['message'] = $e->getMessage();
             $loggerContext['code'] = $e->getCode();
             $logger->notice('Ошибка в процессе обработки запроса. [{code}] {message}', $loggerContext);
@@ -206,6 +210,10 @@ class CoupandaCouponGenerator extends \CBitrixComponent
         $response->clear();
         $response->addHeader('Content-Type', 'application/json');
 
+        $logger = $this->getLogger();
+        $loggerContext = $this->getLoggerContext();
+        $logger->debug('Ajax запрос {request}', $loggerContext);
+
         try {
             if (!check_bitrix_sessid()) {
                 throw new SystemException('Ваша сессия истекла. Перезагрузите страницу');
@@ -216,9 +224,10 @@ class CoupandaCouponGenerator extends \CBitrixComponent
                 throw new \LogicException('Произошла неизвестная ошибка работы с модулем. Обратитесь в техническую поддержку');
             }
 
+            $loggerContext['response'] = $ajaxResponse->render();
+            $logger->debug('Ajax ответ {response}', $loggerContext);
+
         } catch (\Exception $e) {
-            $logger = $this->getLogger();
-            $loggerContext = $this->getLoggerContext();
             $loggerContext['message'] = $e->getMessage();
             $loggerContext['code'] = $e->getCode();
             $logger->notice('Ошибка в процессе обработки ajax запроса. [{code}] {message}', $loggerContext);
@@ -514,8 +523,9 @@ class CoupandaCouponGenerator extends \CBitrixComponent
 
     protected function getLogger()
     {
+        $logLevelOption = Option::get('maximaster.coupanda', 'log_level', 'none');
         if ($this->logger === null) {
-            $this->logger = new Logger();
+            $this->logger = LoggerFactory::get($logLevelOption);
         }
 
         return $this->logger;
