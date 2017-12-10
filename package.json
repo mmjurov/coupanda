@@ -1,0 +1,31 @@
+{
+  "name": "maximaster.coupanda",
+  "version": "1.0.0",
+  "description": "Модуль для 1С-Битрикс, который расширяет возможности встроенной купонной системы.",
+  "main": "gulpfile.js",
+  "scripts": {
+    "gulp": "./node_modules/.bin/gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mmjurov/coupanda.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mmjurov/coupanda/issues"
+  },
+  "homepage": "https://github.com/mmjurov/coupanda#readme",
+  "devDependencies": {
+    "del": "^3.0.0",
+    "gulp": "^3.9.1",
+    "gulp-file": "^0.3.0",
+    "gulp-folders": "^1.1.0",
+    "gulp-git": "^2.4.2",
+    "gulp-gzip": "^1.4.0",
+    "gulp-iconv": "0.0.1",
+    "gulp-tar": "^2.0.0",
+    "moment": "^2.19.3",
+    "run-sequence": "^2.2.0"
+  }
+}
