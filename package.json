@@ -4,7 +4,8 @@
   "description": "Модуль для 1С-Битрикс, который расширяет возможности встроенной купонной системы.",
   "main": "gulpfile.js",
   "scripts": {
-    "gulp": "./node_modules/.bin/gulp"
+    "gulp": "./node_modules/.bin/gulp",
+    "build_last_version": "./node_modules/.bin/gulp build_last_version"
   },
   "repository": {
     "type": "git",

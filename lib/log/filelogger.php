@@ -13,6 +13,11 @@ class FileLogger extends AbstractLogger
         LogLevel::WARNING
     ];
 
+    protected function getPath()
+    {
+        return __DIR__ . '/../../debug.log';
+    }
+
     protected function isErrorLevel($level)
     {
         return in_array($level, $this->errorLevels);
@@ -45,6 +50,6 @@ class FileLogger extends AbstractLogger
 
         $message = str_replace(array_keys($newContext), array_values($newContext), $message);
         $message = $date . ' [' . $level . '] ' . $message . PHP_EOL;
-        file_put_contents(__DIR__ . '/../../debug.log', $message, FILE_APPEND);
+        file_put_contents($this->getPath(), $message, FILE_APPEND);
     }
 }

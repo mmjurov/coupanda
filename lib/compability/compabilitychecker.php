@@ -9,6 +9,11 @@ use Bitrix\Main\Result;
 
 class CompabilityChecker
 {
+    public function isCompatible()
+    {
+        return $this->check()->isSuccess();
+    }
+
     public function check()
     {
         $result = new Result();
