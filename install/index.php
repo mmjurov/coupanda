@@ -10,13 +10,13 @@ if (\class_exists('maximaster_coupanda')) {
     return;
 }
 
-class maximaster_coupanda extends \CModule
+class maximaster_coupanda extends CModule
 {
     public $MODULE_NAME;
     public $MODULE_DESCRIPTION;
     public $MODULE_VERSION;
     public $MODULE_VERSION_DATE;
-    public $MODULE_ID;
+    public $MODULE_ID = 'maximaster.coupanda';
     public $MODULE_SORT;
     public $SHOW_SUPER_ADMIN_GROUP_RIGHTS;
     public $MODULE_GROUP_RIGHTS;

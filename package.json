@@ -18,14 +18,12 @@
   },
   "homepage": "https://github.com/mmjurov/coupanda#readme",
   "devDependencies": {
-    "del": "^3.0.0",
     "gulp": "^3.9.1",
+    "gulp-clean": "^0.3.2",
     "gulp-file": "^0.3.0",
-    "gulp-folders": "^1.1.0",
     "gulp-git": "^2.4.2",
-    "gulp-gzip": "^1.4.0",
     "gulp-iconv": "0.0.1",
-    "gulp-tar": "^2.0.0",
+    "gulp-zip": "^4.0.0",
     "moment": "^2.19.3",
     "run-sequence": "^2.2.0"
   }
